@@ -1,4 +1,11 @@
-import { Box, Card, CardContent, Paper, Stack, Typography } from "@mui/material";
+import {
+  Box,
+  Card,
+  CardContent,
+  Paper,
+  Stack,
+  Typography,
+} from "@mui/material";
 import type { ReactNode } from "react";
 
 interface MetricCardProps {
@@ -12,12 +19,18 @@ export function MetricCard({ label, value, icon }: MetricCardProps) {
     <Card>
       <CardContent>
         <Stack direction="row" justifyContent="space-between" spacing={2}>
-          <Box>
+          <Stack
+            flex={1}
+            minHeight={{
+              md: 100,
+            }}
+            justifyContent={"space-around"}
+          >
             <Typography color="text.secondary" variant="overline">
               {label}
             </Typography>
             <Typography variant="h2">{value}</Typography>
-          </Box>
+          </Stack>
           <Paper
             sx={{
               alignItems: "center",
