@@ -1,3 +1,6 @@
 name = "storm-demo-web"
 compatibility_date = "2026-04-16"
 pages_build_output_dir = "./dist"
+
+[env.production.vars]
+VITE_API_URL = "https://storm-demo-api.reubenmark.workers.dev"
