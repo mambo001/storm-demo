@@ -1,64 +1,53 @@
-import { Effect, Layer, Schema } from "effect";
+import { desc } from "drizzle-orm";
+import { Effect, Layer } from "effect";
 
-import { Alert } from "@/domain/entities";
+import type { Alert } from "@/domain/entities";
 import { DatabaseError } from "@/domain/errors";
 import { AlertRepository } from "@/domain/ports";
-import { D1DatabaseTag } from "@/shared/config";
+import { DatabaseTag } from "@/infra/drizzle/client";
+import { alerts } from "@/infra/drizzle/schema";
 
-interface AlertRow {
-  id: string;
-  user_id: string;
-  storm_event_id: string;
-  channel: "email";
-  status: "queued" | "sent" | "failed";
-  message: string;
-  created_at: string;
-}
-
-const toAlert = (row: AlertRow) => ({
+const toAlert = (row: typeof alerts.$inferSelect): Alert => ({
   id: row.id,
-  userId: row.user_id,
-  stormEventId: row.storm_event_id,
+  userId: row.userId,
+  stormEventId: row.stormEventId,
   channel: row.channel,
   status: row.status,
   message: row.message,
-  createdAt: row.created_at,
+  createdAt: row.createdAt,
 });
 
 export const D1AlertRepositoryLive = Layer.effect(
   AlertRepository,
   Effect.gen(function* () {
-    const db = yield* D1DatabaseTag;
+    const db = yield* DatabaseTag;
 
     const create = (alert: Alert) =>
       Effect.tryPromise({
         try: () =>
-          db
-            .prepare(
-              "INSERT INTO alerts (id, user_id, storm_event_id, channel, status, message, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            )
-            .bind(
-              alert.id,
-              alert.userId,
-              alert.stormEventId,
-              alert.channel,
-              alert.status,
-              alert.message,
-              alert.createdAt,
-            )
-            .run(),
+          db.insert(alerts).values({
+            id: alert.id,
+            userId: alert.userId,
+            stormEventId: alert.stormEventId,
+            channel: alert.channel,
+            status: alert.status,
+            message: alert.message,
+            createdAt: alert.createdAt,
+          }),
         catch: (error) => new DatabaseError(String(error)),
       }).pipe(Effect.asVoid);
 
     const listRecent = () =>
-      Effect.gen(function* () {
-        const result = yield* Effect.tryPromise({
-          try: () => db.prepare("SELECT * FROM alerts ORDER BY created_at DESC LIMIT 25").all(),
-          catch: (error) => new DatabaseError(String(error)),
-        });
-        const rows = (result as D1Result<Record<string, unknown>>).results as unknown as AlertRow[];
-
-        return yield* Schema.decodeUnknown(Schema.Array(Alert))(rows.map(toAlert));
+      Effect.tryPromise({
+        try: async () => {
+          const rows = await db
+            .select()
+            .from(alerts)
+            .orderBy(desc(alerts.createdAt))
+            .limit(25);
+          return rows.map(toAlert);
+        },
+        catch: (error) => new DatabaseError(String(error)),
       });
 
     return AlertRepository.of({ create, listRecent });

@@ -1,56 +1,41 @@
-import { Effect, Layer, Schema } from "effect";
+import { eq } from "drizzle-orm";
+import { Effect, Layer } from "effect";
 
-import { User } from "@/domain/entities";
+import type { User } from "@/domain/entities";
 import { ConflictError, DatabaseError, NotFoundError } from "@/domain/errors";
 import { UserRepository } from "@/domain/ports";
-import { D1DatabaseTag } from "@/shared/config";
+import { DatabaseTag } from "@/infra/drizzle/client";
+import { users } from "@/infra/drizzle/schema";
 
-interface UserRow {
-  id: string;
-  email: string;
-  password_hash: string;
-  company_name: string;
-  contact_name: string;
-  phone: string | null;
-  role: "client" | "admin";
-  created_at: string;
-}
-
-const toUser = (row: UserRow) =>
-  Schema.decodeUnknown(User)({
-    id: row.id,
-    email: row.email,
-    passwordHash: row.password_hash,
-    companyName: row.company_name,
-    contactName: row.contact_name,
-    phone: row.phone,
-    role: row.role,
-    createdAt: row.created_at,
-  });
+const toUser = (row: typeof users.$inferSelect): User => ({
+  id: row.id,
+  email: row.email,
+  passwordHash: row.passwordHash,
+  companyName: row.companyName,
+  contactName: row.contactName,
+  phone: row.phone,
+  role: row.role,
+  createdAt: row.createdAt,
+});
 
 export const D1UserRepositoryLive = Layer.effect(
   UserRepository,
   Effect.gen(function* () {
-    const db = yield* D1DatabaseTag;
+    const db = yield* DatabaseTag;
 
     const create = (user: User) =>
       Effect.tryPromise({
         try: () =>
-          db
-            .prepare(
-              "INSERT INTO users (id, email, password_hash, company_name, contact_name, phone, role, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            )
-            .bind(
-              user.id,
-              user.email,
-              user.passwordHash,
-              user.companyName,
-              user.contactName,
-              user.phone,
-              user.role,
-              user.createdAt,
-            )
-            .run(),
+          db.insert(users).values({
+            id: user.id,
+            email: user.email,
+            passwordHash: user.passwordHash,
+            companyName: user.companyName,
+            contactName: user.contactName,
+            phone: user.phone,
+            role: user.role,
+            createdAt: user.createdAt,
+          }),
         catch: (error) => {
           const message = String(error);
           return message.includes("UNIQUE")
@@ -61,56 +46,46 @@ export const D1UserRepositoryLive = Layer.effect(
 
     const findByEmail = (email: string) =>
       Effect.gen(function* () {
-        const row = yield* Effect.tryPromise({
+        const rows = yield* Effect.tryPromise({
           try: () =>
             db
-              .prepare("SELECT * FROM users WHERE email = ?")
-              .bind(email.toLowerCase())
-              .first(),
+              .select()
+              .from(users)
+              .where(eq(users.email, email.toLowerCase())),
           catch: (error) => new DatabaseError(String(error)),
         });
 
-        if (!row) {
+        if (rows.length === 0) {
           return yield* Effect.fail(new NotFoundError(`User ${email} not found`));
         }
 
-        return yield* toUser(row as unknown as UserRow);
+        return toUser(rows[0]);
       });
 
     const findById = (id: string) =>
       Effect.gen(function* () {
-        const row = yield* Effect.tryPromise({
-          try: () => db.prepare("SELECT * FROM users WHERE id = ?").bind(id).first(),
+        const rows = yield* Effect.tryPromise({
+          try: () => db.select().from(users).where(eq(users.id, id)),
           catch: (error) => new DatabaseError(String(error)),
         });
 
-        if (!row) {
+        if (rows.length === 0) {
           return yield* Effect.fail(new NotFoundError(`User ${id} not found`));
         }
 
-        return yield* toUser(row as unknown as UserRow);
+        return toUser(rows[0]);
       });
 
     const listAll = () =>
-      Effect.gen(function* () {
-        const result = yield* Effect.tryPromise({
-          try: () => db.prepare("SELECT * FROM users ORDER BY created_at DESC").all(),
-          catch: (error) => new DatabaseError(String(error)),
-        });
-        const rows = (result as D1Result<Record<string, unknown>>).results as unknown as UserRow[];
-
-        return yield* Schema.decodeUnknown(Schema.Array(User))(
-          rows.map((row) => ({
-            id: row.id,
-            email: row.email,
-            passwordHash: row.password_hash,
-            companyName: row.company_name,
-            contactName: row.contact_name,
-            phone: row.phone,
-            role: row.role,
-            createdAt: row.created_at,
-          })),
-        );
+      Effect.tryPromise({
+        try: async () => {
+          const rows = await db
+            .select()
+            .from(users)
+            .orderBy(users.createdAt);
+          return rows.map(toUser);
+        },
+        catch: (error) => new DatabaseError(String(error)),
       });
 
     return UserRepository.of({ create, findByEmail, findById, listAll });

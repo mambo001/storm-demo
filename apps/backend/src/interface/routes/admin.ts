@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 
 import { ingestStormEvents, triggerManualAlert } from "@/application/commands";
-import { listAdminSummary } from "@/application/queries";
+import { getWeatherDebug, listAdminSummary } from "@/application/queries";
 import { runEffect, type AppEnv } from "@/app";
 import { requireAdmin, requireAuth } from "@/interface/middleware/auth";
 
@@ -13,6 +13,12 @@ adminRoutes.get("/summary", async (c) => {
   const summary = await runEffect(c, listAdminSummary());
 
   return c.json(summary);
+});
+
+adminRoutes.get("/weather-debug", async (c) => {
+  const debug = await runEffect(c, getWeatherDebug());
+
+  return c.json(debug);
 });
 
 adminRoutes.post("/ingest", async (c) => {

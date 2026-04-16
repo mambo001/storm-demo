@@ -1,6 +1,6 @@
 import { Effect, Schema } from "effect";
 import { Hono } from "hono";
-import { deleteCookie, setCookie } from "hono/cookie";
+import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 
 import { login, LoginInput, logout, signUp, SignUpInput } from "@/application/commands";
 import { getCurrentUser } from "@/application/queries";
@@ -61,4 +61,32 @@ authRoutes.get("/me", requireAuth, async (c) => {
   const user = await runEffect(c, getCurrentUser(token));
 
   return c.json({ user });
+});
+
+authRoutes.get("/debug-session", async (c) => {
+  const token = getCookie(c, "stormdemo_session");
+
+  if (!token) {
+    return c.json({
+      cookiePresent: false,
+      sessionValid: false,
+      user: null,
+    });
+  }
+
+  try {
+    const user = await runEffect(c, getCurrentUser(token));
+
+    return c.json({
+      cookiePresent: true,
+      sessionValid: true,
+      user,
+    });
+  } catch {
+    return c.json({
+      cookiePresent: true,
+      sessionValid: false,
+      user: null,
+    });
+  }
 });

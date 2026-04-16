@@ -8,7 +8,14 @@ export const requireAuth: MiddlewareHandler = async (c, next) => {
   const token = getCookie(c, "stormdemo_session");
 
   if (!token) {
-    return c.json({ message: "Unauthorized" }, 401);
+    console.warn("[auth] Missing session cookie", {
+      path: c.req.path,
+      method: c.req.method,
+      origin: c.req.header("Origin") ?? null,
+      host: c.req.header("Host") ?? null,
+    });
+
+    return c.json({ message: "Unauthorized: missing session cookie" }, 401);
   }
 
   try {
@@ -16,8 +23,14 @@ export const requireAuth: MiddlewareHandler = async (c, next) => {
     c.set("authUser", user);
     c.set("sessionToken", token);
     await next();
-  } catch {
-    return c.json({ message: "Unauthorized" }, 401);
+  } catch (error) {
+    console.warn("[auth] Invalid or expired session", {
+      path: c.req.path,
+      method: c.req.method,
+      error: error instanceof Error ? error.message : String(error),
+    });
+
+    return c.json({ message: "Unauthorized: invalid or expired session" }, 401);
   }
 };
 

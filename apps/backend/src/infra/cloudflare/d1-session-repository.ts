@@ -1,71 +1,56 @@
-import { Effect, Layer, Schema } from "effect";
+import { eq } from "drizzle-orm";
+import { Effect, Layer } from "effect";
 
-import { Session } from "@/domain/entities";
+import type { Session } from "@/domain/entities";
 import { DatabaseError, NotFoundError } from "@/domain/errors";
 import { SessionRepository } from "@/domain/ports";
-import { D1DatabaseTag } from "@/shared/config";
+import { DatabaseTag } from "@/infra/drizzle/client";
+import { sessions } from "@/infra/drizzle/schema";
 
-interface SessionRow {
-  id: string;
-  user_id: string;
-  token: string;
-  expires_at: string;
-  created_at: string;
-}
-
-const toSession = (row: SessionRow) =>
-  Schema.decodeUnknown(Session)({
-    id: row.id,
-    userId: row.user_id,
-    token: row.token,
-    expiresAt: row.expires_at,
-    createdAt: row.created_at,
-  });
+const toSession = (row: typeof sessions.$inferSelect): Session => ({
+  id: row.id,
+  userId: row.userId,
+  token: row.token,
+  expiresAt: row.expiresAt,
+  createdAt: row.createdAt,
+});
 
 export const D1SessionRepositoryLive = Layer.effect(
   SessionRepository,
   Effect.gen(function* () {
-    const db = yield* D1DatabaseTag;
+    const db = yield* DatabaseTag;
 
     const create = (session: Session) =>
       Effect.tryPromise({
         try: () =>
-          db
-            .prepare(
-              "INSERT INTO sessions (id, user_id, token, expires_at, created_at) VALUES (?, ?, ?, ?, ?)",
-            )
-            .bind(
-              session.id,
-              session.userId,
-              session.token,
-              session.expiresAt,
-              session.createdAt,
-            )
-            .run(),
+          db.insert(sessions).values({
+            id: session.id,
+            userId: session.userId,
+            token: session.token,
+            expiresAt: session.expiresAt,
+            createdAt: session.createdAt,
+          }),
         catch: (error) => new DatabaseError(String(error)),
       }).pipe(Effect.asVoid);
 
     const findByToken = (token: string) =>
       Effect.gen(function* () {
-        const row = yield* Effect.tryPromise({
+        const rows = yield* Effect.tryPromise({
           try: () =>
-            db
-              .prepare("SELECT * FROM sessions WHERE token = ?")
-              .bind(token)
-              .first(),
+            db.select().from(sessions).where(eq(sessions.token, token)),
           catch: (error) => new DatabaseError(String(error)),
         });
 
-        if (!row) {
+        if (rows.length === 0) {
           return yield* Effect.fail(new NotFoundError("Session not found"));
         }
 
-        return yield* toSession(row as unknown as SessionRow);
+        return toSession(rows[0]);
       });
 
     const deleteByToken = (token: string) =>
       Effect.tryPromise({
-        try: () => db.prepare("DELETE FROM sessions WHERE token = ?").bind(token).run(),
+        try: () => db.delete(sessions).where(eq(sessions.token, token)),
         catch: (error) => new DatabaseError(String(error)),
       }).pipe(Effect.asVoid);
 

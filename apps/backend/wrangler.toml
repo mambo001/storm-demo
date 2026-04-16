@@ -14,6 +14,18 @@ ADMIN_EMAIL = "admin@stormdemo.local"
 WEATHER_MODE = "demo"
 ALERT_FROM_EMAIL = "alerts@stormdemo.local"
 
+[env.noaa.vars]
+SESSION_SECRET = "replace-me-in-production"
+ADMIN_EMAIL = "admin@stormdemo.local"
+WEATHER_MODE = "noaa"
+ALERT_FROM_EMAIL = "alerts@stormdemo.local"
+
+[[env.noaa.d1_databases]]
+binding = "StormDemo"
+database_name = "StormDemo"
+database_id = "local-storm-demo"
+migrations_dir = "migrations"
+
 [observability]
 [observability.logs]
 enabled = true

@@ -7,14 +7,15 @@ import {
   D1StormEventRepositoryLive,
   D1UserRepositoryLive,
 } from "@/infra/cloudflare";
+import { makeDatabaseLayer } from "@/infra/drizzle/client";
 import { PasswordHasherLive } from "@/infra/auth/password-hasher";
 import { ConsoleMailerLive } from "@/infra/notifications/console-mailer";
 import { DemoWeatherProviderLive } from "@/infra/weather/demo-weather-provider";
-import { NoaaWeatherProviderLive } from "@/infra/weather/noaa-weather-provider";
-import { makeConfigLayer, makeD1Layer, type Env } from "@/shared/config";
+import { CombinedWeatherProviderLive } from "@/infra/weather/combined-weather-provider";
+import { makeConfigLayer, type Env } from "@/shared/config";
 
 export const makeAppLayer = (env: Env) => {
-  const d1Layer = makeD1Layer(env);
+  const databaseLayer = makeDatabaseLayer(env.StormDemo);
   const configLayer = makeConfigLayer(env);
   const repositoryLayer = Layer.mergeAll(
     D1UserRepositoryLive,
@@ -22,11 +23,11 @@ export const makeAppLayer = (env: Env) => {
     D1CoverageAreaRepositoryLive,
     D1StormEventRepositoryLive,
     D1AlertRepositoryLive,
-  ).pipe(Layer.provide(d1Layer));
+  ).pipe(Layer.provide(databaseLayer));
   const providerLayer = Layer.mergeAll(
     PasswordHasherLive,
     ConsoleMailerLive,
-    env.WEATHER_MODE === "noaa" ? NoaaWeatherProviderLive : DemoWeatherProviderLive,
+    env.WEATHER_MODE === "noaa" ? CombinedWeatherProviderLive : DemoWeatherProviderLive,
   );
 
   return Layer.mergeAll(repositoryLayer, providerLayer, configLayer);
