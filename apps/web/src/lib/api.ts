@@ -80,8 +80,11 @@ export interface WeatherDebugDto {
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
+console.log({ "import.meta.env.VITE_API_URL": import.meta.env.VITE_API_URL });
+
 const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const url = `${API_BASE_URL}${path}`;
+  const response = await fetch(url, {
     ...init,
     credentials: "include",
     headers: {
