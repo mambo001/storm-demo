@@ -1,0 +1,23 @@
+name = "storm-demo-api"
+main = "./src/index.ts"
+compatibility_date = "2026-04-16"
+
+[[d1_databases]]
+binding = "StormDemo"
+database_name = "StormDemo"
+database_id = "local-storm-demo"
+migrations_dir = "migrations"
+
+[vars]
+SESSION_SECRET = "replace-me-in-production"
+ADMIN_EMAIL = "admin@stormdemo.local"
+WEATHER_MODE = "demo"
+ALERT_FROM_EMAIL = "alerts@stormdemo.local"
+
+[observability]
+[observability.logs]
+enabled = true
+invocation_logs = true
+
+[triggers]
+crons = ["*/30 * * * *"]
