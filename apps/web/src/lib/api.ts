@@ -53,7 +53,46 @@ export interface AdminSummaryDto {
   storms: StormDto[];
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8787";
+export interface WeatherDebugDto {
+  weatherMode: "demo" | "noaa";
+  liveFeedCount: number;
+  dbRecentCount: number;
+  sources: {
+    spc: number;
+    nws: number;
+    demo: number;
+  };
+  sampleEvents: Array<{
+    source: string;
+    eventType: string;
+    severity: string;
+    city: string;
+    region: string;
+    occurredAt: string;
+    lat: number;
+    lng: number;
+    hailSize: number | null;
+    windSpeed: number | null;
+  }>;
+}
+
+const inferDefaultApiBaseUrl = () => {
+  if (typeof window === "undefined") {
+    return "http://127.0.0.1:8787";
+  }
+
+  if (window.location.hostname === "localhost") {
+    return "http://localhost:8787";
+  }
+
+  if (window.location.hostname === "127.0.0.1") {
+    return "http://127.0.0.1:8787";
+  }
+
+  return "http://127.0.0.1:8787";
+};
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? inferDefaultApiBaseUrl();
 
 const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -105,4 +144,5 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload),
     }),
+  weatherDebug: () => request<WeatherDebugDto>("/admin/weather-debug"),
 };

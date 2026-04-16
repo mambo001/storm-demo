@@ -1,6 +1,8 @@
-import { MapContainer, TileLayer, Circle, CircleMarker, Popup } from "react-leaflet";
+import { Circle, CircleMarker, MapContainer, Popup, TileLayer } from "react-leaflet";
 
-import type { CoverageAreaDto, StormDto } from "@/lib/api";
+import type { StormDto } from "@/lib/api";
+import { useCoverageStore } from "@/stores/coverage-store";
+import { useStormStore } from "@/stores/storm-store";
 
 const severityColor: Record<StormDto["severity"], string> = {
   light: "#7d8b99",
@@ -10,12 +12,10 @@ const severityColor: Record<StormDto["severity"], string> = {
 
 const defaultCenter: [number, number] = [32.7767, -96.797];
 
-interface StormMapProps {
-  readonly coverageAreas: CoverageAreaDto[];
-  readonly storms: StormDto[];
-}
+export function StormMap() {
+  const coverageAreas = useCoverageStore((s) => s.areas);
+  const storms = useStormStore((s) => s.storms);
 
-export function StormMap({ coverageAreas, storms }: StormMapProps) {
   const firstCoverageArea = coverageAreas[0];
   const center: [number, number] = firstCoverageArea
     ? [firstCoverageArea.centerLat, firstCoverageArea.centerLng]
