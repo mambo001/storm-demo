@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit -p tsconfig.json && vite build",
+    "deploy": "bun run build && wrangler pages deploy dist",
     "test": "vitest run"
   },
   "dependencies": {

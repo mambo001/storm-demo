@@ -5,11 +5,11 @@ import { Grid } from "@mui/material";
 
 import { MetricCard } from "@/app/components/metric-card";
 import { useCoverageStore } from "@/stores/coverage-store";
-import { selectMatchingStorms, useStormStore } from "@/stores/storm-store";
+import { useStormStore } from "@/stores/storm-store";
 
 export function MetricsBar() {
   const stormCount = useStormStore((s) => s.storms.length);
-  const matchingCount = useStormStore(selectMatchingStorms).length;
+  const matchingCount = useStormStore((s) => s.storms.filter((st) => st.matchesCoverage).length);
   const areaCount = useCoverageStore((s) => s.areas.length);
 
   return (

@@ -1,8 +1,17 @@
 import { cors } from "hono/cors";
+import type { MiddlewareHandler } from "hono";
 
-export const corsMiddleware = cors({
-  origin: (origin) => origin || "*",
-  allowHeaders: ["Content-Type"],
-  allowMethods: ["GET", "POST", "OPTIONS"],
-  credentials: true,
-});
+import type { AppEnv } from "@/app";
+
+export const corsMiddleware: MiddlewareHandler<AppEnv> = async (c, next) => {
+  const allowedOrigin = c.env?.ALLOWED_ORIGIN;
+
+  const handler = cors({
+    origin: allowedOrigin ? allowedOrigin : (origin) => origin || "",
+    allowHeaders: ["Content-Type"],
+    allowMethods: ["GET", "POST", "OPTIONS"],
+    credentials: true,
+  });
+
+  return handler(c, next);
+};

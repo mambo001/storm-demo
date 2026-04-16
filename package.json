@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "bun run --filter '*' dev",
     "build": "bun run --filter '*' build",
+    "deploy": "bun run --filter '*' deploy",
     "test": "bun run --filter '*' test"
   },
   "dependencies": {

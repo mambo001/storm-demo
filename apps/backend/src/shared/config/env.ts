@@ -6,6 +6,8 @@ export interface Env {
   ADMIN_EMAIL?: string;
   WEATHER_MODE?: string;
   ALERT_FROM_EMAIL?: string;
+  ALLOWED_ORIGIN?: string;
+  ALERT_QUEUE?: Queue;
 }
 
 export interface AppConfig {

@@ -2,20 +2,42 @@ name = "storm-demo-api"
 main = "./src/index.ts"
 compatibility_date = "2026-04-16"
 
+# ---------------------------------------------------------------------------
+# D1 Database
+# ---------------------------------------------------------------------------
 [[d1_databases]]
 binding = "StormDemo"
 database_name = "StormDemo"
-database_id = "local-storm-demo"
+database_id = "2945bed6-8dbe-40a9-b02c-ced2706297b3"
 migrations_dir = "migrations"
 
+# ---------------------------------------------------------------------------
+# Queues  (alert dispatch)
+# ---------------------------------------------------------------------------
+[[queues.producers]]
+queue = "storm-demo-alerts"
+binding = "ALERT_QUEUE"
+
+[[queues.consumers]]
+queue = "storm-demo-alerts"
+max_batch_size = 10
+max_retries = 3
+
+# ---------------------------------------------------------------------------
+# Vars  (non-secret)
+# ---------------------------------------------------------------------------
+# SESSION_SECRET must be set via: wrangler secret put SESSION_SECRET
+# Do NOT put it in [vars] for production.
 [vars]
-SESSION_SECRET = "replace-me-in-production"
 ADMIN_EMAIL = "admin@stormdemo.local"
 WEATHER_MODE = "demo"
 ALERT_FROM_EMAIL = "alerts@stormdemo.local"
+ALLOWED_ORIGIN = "https://storm-demo.pages.dev"
 
+# ---------------------------------------------------------------------------
+# NOAA environment
+# ---------------------------------------------------------------------------
 [env.noaa.vars]
-SESSION_SECRET = "replace-me-in-production"
 ADMIN_EMAIL = "admin@stormdemo.local"
 WEATHER_MODE = "noaa"
 ALERT_FROM_EMAIL = "alerts@stormdemo.local"
@@ -23,13 +45,28 @@ ALERT_FROM_EMAIL = "alerts@stormdemo.local"
 [[env.noaa.d1_databases]]
 binding = "StormDemo"
 database_name = "StormDemo"
-database_id = "local-storm-demo"
+database_id = "2945bed6-8dbe-40a9-b02c-ced2706297b3"
 migrations_dir = "migrations"
 
+[[env.noaa.queues.producers]]
+queue = "storm-demo-alerts"
+binding = "ALERT_QUEUE"
+
+[[env.noaa.queues.consumers]]
+queue = "storm-demo-alerts"
+max_batch_size = 10
+max_retries = 3
+
+# ---------------------------------------------------------------------------
+# Observability
+# ---------------------------------------------------------------------------
 [observability]
 [observability.logs]
 enabled = true
 invocation_logs = true
 
+# ---------------------------------------------------------------------------
+# Cron triggers  (ingest storms every 30 minutes)
+# ---------------------------------------------------------------------------
 [triggers]
 crons = ["*/30 * * * *"]

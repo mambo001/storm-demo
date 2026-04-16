@@ -11,10 +11,11 @@ const decodeSignUpInput = Schema.decodeUnknown(SignUpInput);
 const decodeLoginInput = Schema.decodeUnknown(LoginInput);
 
 const setSessionCookie = (c: any, token: string) => {
+  const isSecure = new URL(c.req.url).protocol === "https:";
   setCookie(c, "stormdemo_session", token, {
     httpOnly: true,
-    secure: false,
-    sameSite: "Lax",
+    secure: isSecure,
+    sameSite: isSecure ? "None" : "Lax",
     path: "/",
     maxAge: 60 * 60 * 24 * 14,
   });

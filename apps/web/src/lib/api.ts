@@ -76,23 +76,23 @@ export interface WeatherDebugDto {
   }>;
 }
 
-const inferDefaultApiBaseUrl = () => {
-  if (typeof window === "undefined") {
-    return "http://127.0.0.1:8787";
+const inferApiBaseUrl = () => {
+  if (typeof window === "undefined") return "http://127.0.0.1:8787";
+
+  const { hostname, protocol } = window.location;
+
+  // Local development
+  if (hostname === "localhost" || hostname === "127.0.0.1") {
+    return `http://${hostname}:8787`;
   }
 
-  if (window.location.hostname === "localhost") {
-    return "http://localhost:8787";
-  }
-
-  if (window.location.hostname === "127.0.0.1") {
-    return "http://127.0.0.1:8787";
-  }
-
-  return "http://127.0.0.1:8787";
+  // Production: assume API is on api. subdomain of the same root domain
+  // e.g. storm-demo.pages.dev -> api.storm-demo.pages.dev
+  //      stormdemo.com        -> api.stormdemo.com
+  return `${protocol}//api.${hostname}`;
 };
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? inferDefaultApiBaseUrl();
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || inferApiBaseUrl();
 
 const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
   const response = await fetch(`${API_BASE_URL}${path}`, {
