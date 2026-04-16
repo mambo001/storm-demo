@@ -11,6 +11,11 @@
     "test": "bun run --filter '*' test"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@fontsource/roboto": "^5.2.6",
+    "@mui/icons-material": "^7.3.4",
+    "@mui/material": "^7.3.4",
     "@cloudflare/vite-plugin": "^1.28.0",
     "@cloudflare/workers-types": "^4.20260313.1",
     "effect": "^3.21.0",
