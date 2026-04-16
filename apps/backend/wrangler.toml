@@ -30,7 +30,8 @@ max_retries = 3
 # Do NOT put it in [vars] for production.
 [vars]
 ADMIN_EMAIL = "admin@stormdemo.local"
-WEATHER_MODE = "demo"
+# WEATHER_MODE = "demo"
+WEATHER_MODE = "noaa"
 ALERT_FROM_EMAIL = "alerts@stormdemo.local"
 ALLOWED_ORIGIN = "https://storm-demo-web.pages.dev"
 

@@ -21,6 +21,8 @@ export interface CoverageAreaDto {
 
 export interface StormDto {
   id: string;
+  source: string;
+  sourceEventId: string;
   eventType: "hail" | "wind";
   severity: "light" | "moderate" | "severe";
   occurredAt: string;

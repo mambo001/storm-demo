@@ -1,6 +1,7 @@
 import { Circle, CircleMarker, MapContainer, Popup, TileLayer } from "react-leaflet";
 
 import type { StormDto } from "@/lib/api";
+import { getSourceLabel, getSourceUrl } from "@/lib/source-url";
 import { useCoverageStore } from "@/stores/coverage-store";
 import { useStormStore } from "@/stores/storm-store";
 
@@ -43,29 +44,41 @@ export function StormMap() {
         </Circle>
       ))}
 
-      {storms.map((storm) => (
-        <CircleMarker
-          key={storm.id}
-          center={[storm.lat, storm.lng]}
-          radius={storm.matchesCoverage ? 10 : 7}
-          pathOptions={{
-            color: severityColor[storm.severity],
-            fillColor: severityColor[storm.severity],
-            fillOpacity: storm.matchesCoverage ? 0.9 : 0.6,
-          }}
-        >
-          <Popup>
-            <strong>
-              {storm.eventType.toUpperCase()} {storm.city}, {storm.region}
-            </strong>
-            <div>Severity: {storm.severity}</div>
-            <div>{new Date(storm.occurredAt).toLocaleString()}</div>
-            {storm.hailSize ? <div>Hail: {storm.hailSize.toFixed(2)} in</div> : null}
-            {storm.windSpeed ? <div>Wind: {storm.windSpeed} mph</div> : null}
-            <div>{storm.matchesCoverage ? "Inside coverage" : "Outside coverage"}</div>
-          </Popup>
-        </CircleMarker>
-      ))}
+      {storms.map((storm) => {
+        const sourceUrl = getSourceUrl(storm.source, storm.sourceEventId);
+        const sourceLabel = getSourceLabel(storm.source);
+
+        return (
+          <CircleMarker
+            key={storm.id}
+            center={[storm.lat, storm.lng]}
+            radius={storm.matchesCoverage ? 10 : 7}
+            pathOptions={{
+              color: severityColor[storm.severity],
+              fillColor: severityColor[storm.severity],
+              fillOpacity: storm.matchesCoverage ? 0.9 : 0.6,
+            }}
+          >
+            <Popup>
+              <strong>
+                {storm.eventType.toUpperCase()} {storm.city}, {storm.region}
+              </strong>
+              <div>Severity: {storm.severity}</div>
+              <div>{new Date(storm.occurredAt).toLocaleString()}</div>
+              {storm.hailSize ? <div>Hail: {storm.hailSize.toFixed(2)} in</div> : null}
+              {storm.windSpeed ? <div>Wind: {storm.windSpeed} mph</div> : null}
+              <div>{storm.matchesCoverage ? "Inside coverage" : "Outside coverage"}</div>
+              {sourceUrl ? (
+                <div>
+                  <a href={sourceUrl} target="_blank" rel="noopener noreferrer">
+                    {sourceLabel}
+                  </a>
+                </div>
+              ) : null}
+            </Popup>
+          </CircleMarker>
+        );
+      })}
     </MapContainer>
   );
 }
