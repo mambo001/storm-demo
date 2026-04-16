@@ -15,10 +15,10 @@ export const corsMiddleware: MiddlewareHandler<{ Bindings: Env }> = async (
   next,
 ) => {
   const allowedOrigin = c.env?.ALLOWED_ORIGIN;
-  console.log({ "CORS allowedOrigin": allowedOrigin });
+
   const handler = cors({
     origin: allowedOrigin
-      ? [...allowedOrigin, "http://localhost:5173", "http://127.0.0.1:5173"]
+      ? [allowedOrigin, "http://localhost:5173", "http://127.0.0.1:5173"]
       : (origin) => origin ?? "http://localhost:5173",
     allowHeaders: ["Content-Type"],
     allowMethods: ["GET", "POST", "OPTIONS"],

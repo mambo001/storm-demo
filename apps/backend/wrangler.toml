@@ -32,7 +32,7 @@ max_retries = 3
 ADMIN_EMAIL = "admin@stormdemo.local"
 WEATHER_MODE = "demo"
 ALERT_FROM_EMAIL = "alerts@stormdemo.local"
-ALLOWED_ORIGIN = "https://storm-demo.pages.dev"
+ALLOWED_ORIGIN = "https://storm-demo-web.pages.dev"
 
 # ---------------------------------------------------------------------------
 # NOAA environment
