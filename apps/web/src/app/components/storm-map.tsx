@@ -3,9 +3,9 @@ import { MapContainer, TileLayer, Circle, CircleMarker, Popup } from "react-leaf
 import type { CoverageAreaDto, StormDto } from "@/lib/api";
 
 const severityColor: Record<StormDto["severity"], string> = {
-  light: "#94a3b8",
-  moderate: "#f59e0b",
-  severe: "#dc2626",
+  light: "#7d8b99",
+  moderate: "#c68a2d",
+  severe: "#c05a50",
 };
 
 const defaultCenter: [number, number] = [32.7767, -96.797];
@@ -22,7 +22,7 @@ export function StormMap({ coverageAreas, storms }: StormMapProps) {
     : defaultCenter;
 
   return (
-    <MapContainer center={center} zoom={7} style={{ height: 420, width: "100%" }}>
+    <MapContainer center={center} zoom={7} style={{ height: 440, width: "100%" }}>
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -33,7 +33,7 @@ export function StormMap({ coverageAreas, storms }: StormMapProps) {
           key={coverageArea.id}
           center={[coverageArea.centerLat, coverageArea.centerLng]}
           radius={coverageArea.radiusMiles * 1609.34}
-          pathOptions={{ color: "#2563eb", fillOpacity: 0.1 }}
+          pathOptions={{ color: "#355872", fillColor: "#9CD5FF", fillOpacity: 0.12, weight: 2 }}
         >
           <Popup>
             <strong>{coverageArea.label}</strong>

@@ -1,6 +1,33 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded";
+import RadarRoundedIcon from "@mui/icons-material/RadarRounded";
+import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
+import {
+  Alert,
+  AppBar,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  Container,
+  CssBaseline,
+  Divider,
+  Grid,
+  InputAdornment,
+  MenuItem,
+  Paper,
+  Stack,
+  Tab,
+  Tabs,
+  TextField,
+  ThemeProvider,
+  Toolbar,
+  Typography,
+} from "@mui/material";
+import { FormEvent, type SyntheticEvent, useEffect, useMemo, useState } from "react";
 
 import { StormMap } from "@/app/components/storm-map";
+import { appTheme } from "@/app/theme";
 import { api, type AdminSummaryDto, type CoverageAreaDto, type StormDto, type UserDto } from "@/lib/api";
 
 type AuthMode = "login" | "signup";
@@ -12,6 +39,42 @@ const emptyCoverageForm = {
   radiusMiles: 50,
   threshold: "moderate" as const,
 };
+
+const severityChipColor: Record<StormDto["severity"], "default" | "warning" | "error"> = {
+  light: "default",
+  moderate: "warning",
+  severe: "error",
+};
+
+function MetricCard({ label, value, icon }: { label: string; value: number; icon: React.ReactNode }) {
+  return (
+    <Card>
+      <CardContent>
+        <Stack direction="row" justifyContent="space-between" spacing={2}>
+          <Box>
+            <Typography color="text.secondary" variant="overline">
+              {label}
+            </Typography>
+            <Typography variant="h2">{value}</Typography>
+          </Box>
+          <Paper
+            sx={{
+              alignItems: "center",
+              bgcolor: "info.main",
+              color: "primary.main",
+              display: "inline-flex",
+              height: 44,
+              justifyContent: "center",
+              width: 44,
+            }}
+          >
+            {icon}
+          </Paper>
+        </Stack>
+      </CardContent>
+    </Card>
+  );
+}
 
 export function App() {
   const [authMode, setAuthMode] = useState<AuthMode>("signup");
@@ -149,275 +212,382 @@ export function App() {
 
   if (!user) {
     return (
-      <main className="shell auth-shell">
-        <section className="panel hero-panel">
-          <p className="eyebrow">Storm Coverage Monitor</p>
-          <h1>Cloudflare-native hail and wind alert demo</h1>
-          <p className="lede">
-            Sign up as a client to define a coverage radius and see recent storms. Use
-            <code> admin@stormdemo.local </code>
-            to get the admin dashboard.
-          </p>
-        </section>
+      <ThemeProvider theme={appTheme}>
+        <CssBaseline />
+        <Box sx={{ minHeight: "100svh", py: { xs: 4, md: 8 } }}>
+          <Container maxWidth="lg">
+            <Grid container spacing={3} alignItems="stretch">
+              <Grid size={{ xs: 12, md: 7 }}>
+                <Card sx={{ height: "100%" }}>
+                  <CardContent sx={{ display: "flex", flexDirection: "column", gap: 3, p: { xs: 3, md: 5 } }}>
+                    <Box>
+                      <Typography color="text.secondary" variant="overline">
+                        Storm Coverage Monitor
+                      </Typography>
+                      <Typography sx={{ maxWidth: 560, mt: 1 }} variant="h1">
+                        Hail and wind alerts for roofers, contractors, and regional sales teams.
+                      </Typography>
+                    </Box>
 
-        <section className="panel auth-panel">
-          <div className="auth-tabs">
-            <button className={authMode === "signup" ? "active" : ""} onClick={() => setAuthMode("signup")} type="button">
-              Sign up
-            </button>
-            <button className={authMode === "login" ? "active" : ""} onClick={() => setAuthMode("login")} type="button">
-              Log in
-            </button>
-          </div>
+                    <Typography color="text.secondary" sx={{ maxWidth: 560 }} variant="body1">
+                      Define a coverage radius, visualize recent storms on the map, and show a lightweight admin workflow for alerts.
+                      Use <strong>admin@stormdemo.local</strong> during sign-up to unlock the admin dashboard.
+                    </Typography>
 
-          <form className="stack" onSubmit={handleAuthSubmit}>
-            {authMode === "signup" ? (
-              <>
-                <label>
-                  Company name
-                  <input name="companyName" placeholder="North Texas Roofing" required />
-                </label>
-                <label>
-                  Contact name
-                  <input name="contactName" placeholder="Alex Rivera" required />
-                </label>
-                <label>
-                  Phone
-                  <input name="phone" placeholder="(555) 555-5555" />
-                </label>
-              </>
-            ) : null}
+                    <Grid container spacing={2}>
+                      <Grid size={{ xs: 12, sm: 4 }}>
+                        <MetricCard icon={<DashboardRoundedIcon />} label="Portal" value={1} />
+                      </Grid>
+                      <Grid size={{ xs: 12, sm: 4 }}>
+                        <MetricCard icon={<RadarRoundedIcon />} label="Storm feeds" value={1} />
+                      </Grid>
+                      <Grid size={{ xs: 12, sm: 4 }}>
+                        <MetricCard icon={<WarningAmberRoundedIcon />} label="Alert flow" value={1} />
+                      </Grid>
+                    </Grid>
+                  </CardContent>
+                </Card>
+              </Grid>
 
-            <label>
-              Email
-              <input name="email" placeholder="admin@stormdemo.local" required type="email" />
-            </label>
-            <label>
-              Password
-              <input minLength={8} name="password" required type="password" />
-            </label>
+              <Grid size={{ xs: 12, md: 5 }}>
+                <Card>
+                  <CardContent sx={{ p: { xs: 3, md: 4 } }}>
+                    <Tabs onChange={(_event: SyntheticEvent, value: AuthMode) => setAuthMode(value)} sx={{ mb: 3 }} value={authMode}>
+                      <Tab label="Sign up" value="signup" />
+                      <Tab label="Log in" value="login" />
+                    </Tabs>
 
-            {error ? <p className="error-text">{error}</p> : null}
+                    <Box component="form" onSubmit={handleAuthSubmit}>
+                      <Stack spacing={2}>
+                        {authMode === "signup" ? (
+                          <>
+                            <TextField fullWidth label="Company name" name="companyName" placeholder="North Texas Roofing" required />
+                            <TextField fullWidth label="Contact name" name="contactName" placeholder="Alex Rivera" required />
+                            <TextField fullWidth label="Phone" name="phone" placeholder="(555) 555-5555" />
+                          </>
+                        ) : null}
 
-            <button disabled={busy} type="submit">
-              {busy ? "Working..." : authMode === "signup" ? "Create account" : "Log in"}
-            </button>
-          </form>
-        </section>
-      </main>
+                        <TextField fullWidth label="Email" name="email" placeholder="admin@stormdemo.local" required type="email" />
+                        <TextField fullWidth inputProps={{ minLength: 8 }} label="Password" name="password" required type="password" />
+
+                        {error ? <Alert severity="error">{error}</Alert> : null}
+
+                        <Button disabled={busy} size="large" type="submit" variant="contained">
+                          {busy ? "Working..." : authMode === "signup" ? "Create account" : "Log in"}
+                        </Button>
+                      </Stack>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            </Grid>
+          </Container>
+        </Box>
+      </ThemeProvider>
     );
   }
 
   return (
-    <main className="shell app-shell">
-      <header className="topbar panel">
-        <div>
-          <p className="eyebrow">{user.role === "admin" ? "Admin Dashboard" : "Client Portal"}</p>
-          <h1>{user.companyName}</h1>
-          <p className="lede">
-            {user.contactName} · {user.email}
-          </p>
-        </div>
+    <ThemeProvider theme={appTheme}>
+      <CssBaseline />
+      <Box sx={{ minHeight: "100svh" }}>
+        <AppBar position="sticky">
+          <Toolbar sx={{ gap: 2, justifyContent: "space-between" }}>
+            <Box>
+              <Typography color="text.secondary" variant="overline">
+                {user.role === "admin" ? "Admin Dashboard" : "Client Portal"}
+              </Typography>
+              <Typography variant="h6">{user.companyName}</Typography>
+            </Box>
 
-        <div className="actions">
-          {user.role === "admin" ? (
-            <button disabled={busy} onClick={handleIngest} type="button">
-              Pull demo storms
-            </button>
-          ) : null}
-          <button className="secondary" onClick={handleLogout} type="button">
-            Log out
-          </button>
-        </div>
-      </header>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+              {user.role === "admin" ? (
+                <Button disabled={busy} onClick={handleIngest} variant="contained">
+                  Pull demo storms
+                </Button>
+              ) : null}
+              <Button onClick={handleLogout} variant="outlined">
+                Log out
+              </Button>
+            </Stack>
+          </Toolbar>
+        </AppBar>
 
-      {error ? <p className="banner error-text">{error}</p> : null}
+        <Container maxWidth="xl" sx={{ py: 4 }}>
+          <Stack spacing={3}>
+            <Box>
+              <Typography color="text.secondary" variant="overline">
+                Coverage Summary
+              </Typography>
+              <Typography variant="h1">{user.companyName}</Typography>
+              <Typography color="text.secondary" sx={{ mt: 1 }} variant="body1">
+                {user.contactName} · {user.email}
+              </Typography>
+            </Box>
 
-      <section className="grid two-up">
-        <article className="panel">
-          <h2>Coverage areas</h2>
-          <form className="stack compact-form" onSubmit={handleCoverageSubmit}>
-            <label>
-              Label
-              <input
-                onChange={(event) => setCoverageForm((current) => ({ ...current, label: event.target.value }))}
-                value={coverageForm.label}
-              />
-            </label>
+            {error ? <Alert severity="error">{error}</Alert> : null}
 
-            <div className="split">
-              <label>
-                Latitude
-                <input
-                  onChange={(event) =>
-                    setCoverageForm((current) => ({ ...current, centerLat: Number(event.target.value) }))
-                  }
-                  step="0.0001"
-                  type="number"
-                  value={coverageForm.centerLat}
-                />
-              </label>
-              <label>
-                Longitude
-                <input
-                  onChange={(event) =>
-                    setCoverageForm((current) => ({ ...current, centerLng: Number(event.target.value) }))
-                  }
-                  step="0.0001"
-                  type="number"
-                  value={coverageForm.centerLng}
-                />
-              </label>
-            </div>
+            <Grid container spacing={2.5}>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <MetricCard icon={<RadarRoundedIcon />} label="Recent storms" value={storms.length} />
+              </Grid>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <MetricCard icon={<WarningAmberRoundedIcon />} label="Within coverage" value={matchingStorms.length} />
+              </Grid>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <MetricCard icon={<DashboardRoundedIcon />} label="Coverage zones" value={coverageAreas.length} />
+              </Grid>
+            </Grid>
 
-            <div className="split">
-              <label>
-                Radius (miles)
-                <input
-                  min="1"
-                  onChange={(event) =>
-                    setCoverageForm((current) => ({ ...current, radiusMiles: Number(event.target.value) }))
-                  }
-                  type="number"
-                  value={coverageForm.radiusMiles}
-                />
-              </label>
-              <label>
-                Threshold
-                <select
-                  onChange={(event) =>
-                    setCoverageForm((current) => ({
-                      ...current,
-                      threshold: event.target.value as typeof current.threshold,
-                    }))
-                  }
-                  value={coverageForm.threshold}
-                >
-                  <option value="light">Light</option>
-                  <option value="moderate">Moderate</option>
-                  <option value="severe">Severe</option>
-                </select>
-              </label>
-            </div>
+            <Grid container spacing={3}>
+              <Grid size={{ xs: 12, lg: 5 }}>
+                <Card>
+                  <CardContent sx={{ p: 3 }}>
+                    <Stack spacing={3}>
+                      <Box>
+                        <Typography variant="h2">Coverage areas</Typography>
+                        <Typography color="text.secondary" variant="body2">
+                          Set the coverage radius you want to monitor for hail and wind events.
+                        </Typography>
+                      </Box>
 
-            <button disabled={busy} type="submit">
-              Save coverage area
-            </button>
-          </form>
+                      <Box component="form" onSubmit={handleCoverageSubmit}>
+                        <Stack spacing={2}>
+                          <TextField
+                            fullWidth
+                            label="Label"
+                            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setCoverageForm((current) => ({ ...current, label: event.target.value }))}
+                            value={coverageForm.label}
+                          />
+                          <Grid container spacing={2}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                              <TextField
+                                fullWidth
+                                inputProps={{ step: 0.0001 }}
+                                label="Latitude"
+                                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                                  setCoverageForm((current) => ({ ...current, centerLat: Number(event.target.value) }))
+                                }
+                                type="number"
+                                value={coverageForm.centerLat}
+                              />
+                            </Grid>
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                              <TextField
+                                fullWidth
+                                inputProps={{ step: 0.0001 }}
+                                label="Longitude"
+                                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                                  setCoverageForm((current) => ({ ...current, centerLng: Number(event.target.value) }))
+                                }
+                                type="number"
+                                value={coverageForm.centerLng}
+                              />
+                            </Grid>
+                          </Grid>
+                          <Grid container spacing={2}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                              <TextField
+                                fullWidth
+                                InputProps={{ endAdornment: <InputAdornment position="end">mi</InputAdornment> }}
+                                inputProps={{ min: 1 }}
+                                label="Radius"
+                                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                                  setCoverageForm((current) => ({ ...current, radiusMiles: Number(event.target.value) }))
+                                }
+                                type="number"
+                                value={coverageForm.radiusMiles}
+                              />
+                            </Grid>
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                              <TextField
+                                fullWidth
+                                label="Threshold"
+                                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                                  setCoverageForm((current) => ({
+                                    ...current,
+                                    threshold: event.target.value as typeof current.threshold,
+                                  }))
+                                }
+                                select
+                                value={coverageForm.threshold}
+                              >
+                                <MenuItem value="light">Light</MenuItem>
+                                <MenuItem value="moderate">Moderate</MenuItem>
+                                <MenuItem value="severe">Severe</MenuItem>
+                              </TextField>
+                            </Grid>
+                          </Grid>
 
-          <div className="list-block">
-            {coverageAreas.length === 0 ? <p>No coverage areas yet.</p> : null}
-            {coverageAreas.map((coverageArea) => (
-              <div className="list-row" key={coverageArea.id}>
-                <div>
-                  <strong>{coverageArea.label}</strong>
-                  <div>
-                    {coverageArea.centerLat.toFixed(3)}, {coverageArea.centerLng.toFixed(3)}
-                  </div>
-                </div>
-                <span>{coverageArea.radiusMiles} mi</span>
-              </div>
-            ))}
-          </div>
-        </article>
+                          <Button disabled={busy} type="submit" variant="contained">
+                            Save coverage area
+                          </Button>
+                        </Stack>
+                      </Box>
 
-        <article className="panel stats-panel">
-          <h2>Recent storm activity</h2>
-          <div className="stats-grid">
-            <div>
-              <strong>{storms.length}</strong>
-              <span>Recent storms</span>
-            </div>
-            <div>
-              <strong>{matchingStorms.length}</strong>
-              <span>Within coverage</span>
-            </div>
-            <div>
-              <strong>{coverageAreas.length}</strong>
-              <span>Coverage zones</span>
-            </div>
-          </div>
+                      <Divider />
 
-          <div className="list-block">
-            {storms.length === 0 ? (
-              <p>
-                No storms loaded yet. {user.role === "admin" ? "Use Pull demo storms above." : "Ask an admin to ingest demo storms."}
-              </p>
+                      <Stack spacing={1.5}>
+                        {coverageAreas.length === 0 ? (
+                          <Typography color="text.secondary" variant="body2">
+                            No coverage areas yet.
+                          </Typography>
+                        ) : null}
+                        {coverageAreas.map((coverageArea) => (
+                          <Paper key={coverageArea.id} sx={{ p: 2 }} variant="outlined">
+                            <Stack direction="row" justifyContent="space-between" spacing={2}>
+                              <Box>
+                                <Typography variant="h3">{coverageArea.label}</Typography>
+                                <Typography color="text.secondary" variant="body2">
+                                  {coverageArea.centerLat.toFixed(3)}, {coverageArea.centerLng.toFixed(3)}
+                                </Typography>
+                              </Box>
+                              <Chip color="primary" label={`${coverageArea.radiusMiles} mi`} variant="outlined" />
+                            </Stack>
+                          </Paper>
+                        ))}
+                      </Stack>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              <Grid size={{ xs: 12, lg: 7 }}>
+                <Card sx={{ mb: 3 }}>
+                  <CardContent sx={{ p: 3 }}>
+                    <Stack spacing={2}>
+                      <Box>
+                        <Typography variant="h2">Recent storm activity</Typography>
+                        <Typography color="text.secondary" variant="body2">
+                          Events inside your coverage are highlighted as matches.
+                        </Typography>
+                      </Box>
+
+                      <Stack spacing={1.5}>
+                        {storms.length === 0 ? (
+                          <Typography color="text.secondary" variant="body2">
+                            No storms loaded yet. {user.role === "admin" ? "Use Pull demo storms above." : "Ask an admin to ingest demo storms."}
+                          </Typography>
+                        ) : null}
+                        {storms.map((storm) => (
+                          <Paper key={storm.id} sx={{ p: 2 }} variant="outlined">
+                            <Stack direction="row" justifyContent="space-between" spacing={2}>
+                              <Box>
+                                <Typography variant="h3">
+                                  {storm.eventType.toUpperCase()} {storm.city}, {storm.region}
+                                </Typography>
+                                <Typography color="text.secondary" variant="body2">
+                                  {new Date(storm.occurredAt).toLocaleString()}
+                                </Typography>
+                              </Box>
+                              <Chip
+                                color={storm.matchesCoverage ? "primary" : severityChipColor[storm.severity]}
+                                label={storm.matchesCoverage ? "Match" : storm.severity}
+                                variant={storm.matchesCoverage ? "filled" : "outlined"}
+                              />
+                            </Stack>
+                          </Paper>
+                        ))}
+                      </Stack>
+                    </Stack>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent sx={{ p: 3 }}>
+                    <Stack spacing={2}>
+                      <Box>
+                        <Typography color="text.secondary" variant="overline">
+                          Storm Map
+                        </Typography>
+                        <Typography variant="h2">Coverage overlap</Typography>
+                      </Box>
+                      <Box sx={{ borderRadius: 3, overflow: "hidden" }}>
+                        <StormMap coverageAreas={coverageAreas} storms={storms} />
+                      </Box>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              </Grid>
+            </Grid>
+
+            {user.role === "admin" && adminSummary ? (
+              <Grid container spacing={3}>
+                <Grid size={{ xs: 12, lg: 5 }}>
+                  <Card>
+                    <CardContent sx={{ p: 3 }}>
+                      <Stack spacing={2.5}>
+                        <Typography variant="h2">Admin metrics</Typography>
+                        <Grid container spacing={2}>
+                          <Grid size={{ xs: 6 }}>
+                            <MetricCard icon={<DashboardRoundedIcon />} label="Clients" value={adminSummary.metrics.clients} />
+                          </Grid>
+                          <Grid size={{ xs: 6 }}>
+                            <MetricCard icon={<RadarRoundedIcon />} label="Coverage areas" value={adminSummary.metrics.coverageAreas} />
+                          </Grid>
+                          <Grid size={{ xs: 6 }}>
+                            <MetricCard icon={<WarningAmberRoundedIcon />} label="Storm records" value={adminSummary.metrics.recentStorms} />
+                          </Grid>
+                          <Grid size={{ xs: 6 }}>
+                            <MetricCard icon={<WarningAmberRoundedIcon />} label="Alerts" value={adminSummary.metrics.alerts} />
+                          </Grid>
+                        </Grid>
+                      </Stack>
+                    </CardContent>
+                  </Card>
+                </Grid>
+
+                <Grid size={{ xs: 12, lg: 7 }}>
+                  <Card>
+                    <CardContent sx={{ p: 3 }}>
+                      <Stack spacing={2.5}>
+                        <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" spacing={2}>
+                          <Box>
+                            <Typography variant="h2">Manual alert</Typography>
+                            <Typography color="text.secondary" variant="body2">
+                              Sends a demo alert to the first registered user for the first storm in the feed.
+                            </Typography>
+                          </Box>
+                          <Button
+                            disabled={busy || !adminSummary.users[0] || !adminSummary.storms[0]}
+                            onClick={handleSendTestAlert}
+                            variant="contained"
+                          >
+                            Send test alert
+                          </Button>
+                        </Stack>
+
+                        <Stack spacing={1.5}>
+                          {adminSummary.alerts.length === 0 ? (
+                            <Typography color="text.secondary" variant="body2">
+                              No alerts yet.
+                            </Typography>
+                          ) : null}
+                          {adminSummary.alerts.map((alert: AdminSummaryDto["alerts"][number]) => (
+                            <Paper key={alert.id} sx={{ p: 2 }} variant="outlined">
+                              <Stack direction="row" justifyContent="space-between" spacing={2}>
+                                <Box>
+                                  <Typography variant="h3">{alert.status}</Typography>
+                                  <Typography color="text.secondary" variant="body2">
+                                    {alert.message}
+                                  </Typography>
+                                </Box>
+                                <Typography color="text.secondary" variant="body2">
+                                  {new Date(alert.createdAt).toLocaleTimeString()}
+                                </Typography>
+                              </Stack>
+                            </Paper>
+                          ))}
+                        </Stack>
+                      </Stack>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
             ) : null}
-            {storms.map((storm) => (
-              <div className="list-row" key={storm.id}>
-                <div>
-                  <strong>
-                    {storm.eventType.toUpperCase()} {storm.city}, {storm.region}
-                  </strong>
-                  <div>{new Date(storm.occurredAt).toLocaleString()}</div>
-                </div>
-                <span className={`pill ${storm.severity}`}>{storm.matchesCoverage ? "Match" : storm.severity}</span>
-              </div>
-            ))}
-          </div>
-        </article>
-      </section>
-
-      <section className="panel map-panel">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">Storm Map</p>
-            <h2>Coverage overlap</h2>
-          </div>
-        </div>
-        <StormMap coverageAreas={coverageAreas} storms={storms} />
-      </section>
-
-      {user.role === "admin" && adminSummary ? (
-        <section className="grid two-up">
-          <article className="panel">
-            <h2>Admin metrics</h2>
-            <div className="stats-grid">
-              <div>
-                <strong>{adminSummary.metrics.clients}</strong>
-                <span>Clients</span>
-              </div>
-              <div>
-                <strong>{adminSummary.metrics.coverageAreas}</strong>
-                <span>Coverage areas</span>
-              </div>
-              <div>
-                <strong>{adminSummary.metrics.recentStorms}</strong>
-                <span>Storm records</span>
-              </div>
-              <div>
-                <strong>{adminSummary.metrics.alerts}</strong>
-                <span>Alerts sent</span>
-              </div>
-            </div>
-          </article>
-
-          <article className="panel">
-            <div className="section-heading">
-              <h2>Manual alert</h2>
-              <button disabled={busy || !adminSummary.users[0] || !adminSummary.storms[0]} onClick={handleSendTestAlert} type="button">
-                Send test alert
-              </button>
-            </div>
-            <p className="muted">
-              Sends a demo alert to the first registered user for the first storm in the feed.
-            </p>
-            <div className="list-block">
-              {adminSummary.alerts.length === 0 ? <p>No alerts yet.</p> : null}
-              {adminSummary.alerts.map((alert: AdminSummaryDto["alerts"][number]) => (
-                <div className="list-row" key={alert.id}>
-                  <div>
-                    <strong>{alert.status}</strong>
-                    <div>{alert.message}</div>
-                  </div>
-                  <span>{new Date(alert.createdAt).toLocaleTimeString()}</span>
-                </div>
-              ))}
-            </div>
-          </article>
-        </section>
-      ) : null}
-    </main>
+          </Stack>
+        </Container>
+      </Box>
+    </ThemeProvider>
   );
 }
