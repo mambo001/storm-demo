@@ -15,12 +15,27 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useAdminStore } from "@/stores/admin-store";
 import { useAuthStore } from "@/stores/auth-store";
 import { useCoverageStore } from "@/stores/coverage-store";
 import { useStormStore } from "@/stores/storm-store";
+
+// Minutes until the next cron tick (every-30-min schedule: :00 and :30 UTC).
+function useNextPullMinutes(): number {
+  const calc = () => {
+    const m = new Date().getUTCMinutes();
+    const remaining = m < 30 ? 30 - m : 60 - m;
+    return remaining;
+  };
+  const [mins, setMins] = useState(calc);
+  useEffect(() => {
+    const id = setInterval(() => setMins(calc()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+  return mins;
+}
 
 export function AppNavbar() {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -34,6 +49,8 @@ export function AppNavbar() {
   const loadAdmin = useAdminStore((s) => s.load);
   const loadStorms = useStormStore((s) => s.load);
   const loadCoverage = useCoverageStore((s) => s.load);
+
+  const nextPullMins = useNextPullMinutes();
 
   const handleIngest = async () => {
     await ingest();
@@ -59,10 +76,18 @@ export function AppNavbar() {
 
         {isMobile ? (
           <>
-            <IconButton color="inherit" edge="end" onClick={() => setDrawerOpen(true)}>
+            <IconButton
+              color="inherit"
+              edge="end"
+              onClick={() => setDrawerOpen(true)}
+            >
               <MenuIcon />
             </IconButton>
-            <Drawer anchor="right" onClose={() => setDrawerOpen(false)} open={drawerOpen}>
+            <Drawer
+              anchor="right"
+              onClose={() => setDrawerOpen(false)}
+              open={drawerOpen}
+            >
               <Box sx={{ width: 220, pt: 2 }}>
                 <List>
                   {user.role === "admin" ? (
@@ -74,7 +99,10 @@ export function AppNavbar() {
                           void handleIngest();
                         }}
                       >
-                        <ListItemText primary="Pull demo storms" />
+                        <ListItemText
+                          primary="Pull storms"
+                          secondary={`Auto-pull in ${nextPullMins} min`}
+                        />
                       </ListItemButton>
                     </ListItem>
                   ) : null}
@@ -93,11 +121,20 @@ export function AppNavbar() {
             </Drawer>
           </>
         ) : (
-          <Stack direction="row" spacing={1.5}>
+          <Stack alignItems="center" direction="row" spacing={1.5}>
             {user.role === "admin" ? (
-              <Button disabled={adminBusy} onClick={() => void handleIngest()} variant="contained">
-                Pull demo storms
-              </Button>
+              <>
+                <Button
+                  disabled={adminBusy}
+                  onClick={() => void handleIngest()}
+                  variant="contained"
+                >
+                  Pull storms
+                </Button>
+                <Typography color="text.secondary" variant="caption">
+                  Auto-pull in {nextPullMins} min
+                </Typography>
+              </>
             ) : null}
             <Button onClick={() => void handleLogout()} variant="outlined">
               Log out

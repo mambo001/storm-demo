@@ -18,7 +18,10 @@ import { useStormStore } from "@/stores/storm-store";
 
 const PAGE_SIZE = 10;
 
-const severityChipColor: Record<StormDto["severity"], "default" | "warning" | "error"> = {
+const severityChipColor: Record<
+  StormDto["severity"],
+  "default" | "warning" | "error"
+> = {
   light: "default",
   moderate: "warning",
   severe: "error",
@@ -48,7 +51,7 @@ export function StormList() {
               <Typography color="text.secondary" variant="body2">
                 No storms loaded yet.{" "}
                 {userRole === "admin"
-                  ? "Use Pull demo storms above."
+                  ? "Use Pull storms above."
                   : "Ask an admin to ingest demo storms."}
               </Typography>
             ) : null}
@@ -58,10 +61,15 @@ export function StormList() {
 
               return (
                 <Paper key={storm.id} sx={{ p: 2 }} variant="outlined">
-                  <Stack direction="row" justifyContent="space-between" spacing={2}>
+                  <Stack
+                    direction="row"
+                    justifyContent="space-between"
+                    spacing={2}
+                  >
                     <Box>
                       <Typography variant="h3">
-                        {storm.eventType.toUpperCase()} {storm.city}, {storm.region}
+                        {storm.eventType.toUpperCase()} {storm.city},{" "}
+                        {storm.region}
                       </Typography>
                       <Typography color="text.secondary" variant="body2">
                         {new Date(storm.occurredAt).toLocaleString()}
@@ -69,7 +77,11 @@ export function StormList() {
                     </Box>
                     <Stack alignItems="flex-end" spacing={0.75}>
                       <Chip
-                        color={storm.matchesCoverage ? "primary" : severityChipColor[storm.severity]}
+                        color={
+                          storm.matchesCoverage
+                            ? "primary"
+                            : severityChipColor[storm.severity]
+                        }
                         label={storm.matchesCoverage ? "Match" : storm.severity}
                         variant={storm.matchesCoverage ? "filled" : "outlined"}
                       />
@@ -103,7 +115,8 @@ export function StormList() {
           {storms.length > 0 ? (
             <Stack alignItems="center" spacing={1}>
               <Typography color="text.secondary" variant="body2">
-                Showing {Math.min(visibleCount, storms.length)} of {storms.length} storms
+                Showing {Math.min(visibleCount, storms.length)} of{" "}
+                {storms.length} storms
               </Typography>
               {hasMore ? (
                 <Button
