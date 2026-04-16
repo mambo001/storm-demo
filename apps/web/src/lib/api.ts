@@ -78,13 +78,24 @@ export interface WeatherDebugDto {
   }>;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+const inferApiBaseUrl = () => {
+  if (typeof window === "undefined") return "http://127.0.0.1:8787";
 
-console.log({ "import.meta.env.VITE_API_URL": import.meta.env.VITE_API_URL });
+  const { hostname, protocol } = window.location;
+
+  // Local development
+  if (hostname === "localhost" || hostname === "127.0.0.1") {
+    return `http://${hostname}:8787`;
+  }
+
+  // Production: assume API is on api. subdomain of the same root domain
+  return `${protocol}//api.${hostname}`;
+};
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || inferApiBaseUrl();
 
 const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
-  const url = `${API_BASE_URL}${path}`;
-  const response = await fetch(url, {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
     credentials: "include",
     headers: {
