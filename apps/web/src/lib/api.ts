@@ -41,7 +41,9 @@ export interface AdminSummaryDto {
     recentStorms: number;
     alerts: number;
   };
-  users: Array<Pick<UserDto, "id" | "email" | "companyName" | "contactName" | "role">>;
+  users: Array<
+    Pick<UserDto, "id" | "email" | "companyName" | "contactName" | "role">
+  >;
   alerts: Array<{
     id: string;
     userId: string;
@@ -76,23 +78,7 @@ export interface WeatherDebugDto {
   }>;
 }
 
-const inferApiBaseUrl = () => {
-  if (typeof window === "undefined") return "http://127.0.0.1:8787";
-
-  const { hostname, protocol } = window.location;
-
-  // Local development
-  if (hostname === "localhost" || hostname === "127.0.0.1") {
-    return `http://${hostname}:8787`;
-  }
-
-  // Production: assume API is on api. subdomain of the same root domain
-  // e.g. storm-demo.pages.dev -> api.storm-demo.pages.dev
-  //      stormdemo.com        -> api.stormdemo.com
-  return `${protocol}//api.${hostname}`;
-};
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || inferApiBaseUrl();
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -105,7 +91,9 @@ const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
   });
 
   if (!response.ok) {
-    const body = await response.json().catch(() => ({ message: "Request failed" }));
+    const body = await response
+      .json()
+      .catch(() => ({ message: "Request failed" }));
     throw new Error(body.message ?? "Request failed");
   }
 
@@ -120,11 +108,19 @@ export const api = {
     companyName: string;
     contactName: string;
     phone?: string;
-  }) => request<{ user: UserDto }>("/auth/signup", { method: "POST", body: JSON.stringify(payload) }),
+  }) =>
+    request<{ user: UserDto }>("/auth/signup", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
   login: (payload: { email: string; password: string }) =>
-    request<{ user: UserDto }>("/auth/login", { method: "POST", body: JSON.stringify(payload) }),
+    request<{ user: UserDto }>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
   logout: () => request<{ ok: true }>("/auth/logout", { method: "POST" }),
-  listCoverageAreas: () => request<{ coverageAreas: CoverageAreaDto[] }>("/coverage-areas"),
+  listCoverageAreas: () =>
+    request<{ coverageAreas: CoverageAreaDto[] }>("/coverage-areas"),
   createCoverageArea: (payload: {
     label: string;
     centerLat: number;
@@ -138,7 +134,8 @@ export const api = {
     }),
   listStorms: () => request<{ storms: StormDto[] }>("/storms"),
   adminSummary: () => request<AdminSummaryDto>("/admin/summary"),
-  ingestStorms: () => request<{ imported: number }>("/admin/ingest", { method: "POST" }),
+  ingestStorms: () =>
+    request<{ imported: number }>("/admin/ingest", { method: "POST" }),
   sendTestAlert: (payload: { userId: string; stormEventId: string }) =>
     request<{ alert: { id: string } }>("/admin/alerts/test", {
       method: "POST",
