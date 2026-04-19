@@ -68,7 +68,7 @@ invocation_logs = true
 
 # ---------------------------------------------------------------------------
 # Cron triggers  (ingest storms every 30 minutes - demo)
-# Cron triggers  (ingest storms every 4 hours - non-demo)
+# Cron triggers  (ingest storms every 23 hours - non-demo)
 # ---------------------------------------------------------------------------
 [triggers]
-crons = ["0 */4 * * *"]
+crons = ["0 */23 * * *"]
