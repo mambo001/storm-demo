@@ -16,6 +16,8 @@ jobs:
         uses: oven-sh/setup-bun@v1
 
       - name: Build
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
         run: bun install && bun run build
 
       - name: Deploy
