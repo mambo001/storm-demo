@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-import { api, type UserDto } from "@/lib/api";
+import { api, clearSessionToken, storeSessionToken, type UserDto } from "@/lib/api";
 
 interface AuthState {
   readonly user: UserDto | null;
@@ -44,6 +44,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ busy: true, error: null });
     try {
       const response = await api.signup(payload);
+      storeSessionToken(response.token);
       set({ user: response.user, busy: false });
     } catch (err) {
       set({
@@ -58,6 +59,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ busy: true, error: null });
     try {
       const response = await api.login(payload);
+      storeSessionToken(response.token);
       set({ user: response.user, busy: false });
     } catch (err) {
       set({
@@ -69,7 +71,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: async () => {
-    await api.logout();
-    set({ user: null });
+    try {
+      await api.logout();
+    } finally {
+      clearSessionToken();
+      set({ user: null });
+    }
   },
 }));

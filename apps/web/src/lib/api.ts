@@ -80,6 +80,11 @@ export interface WeatherDebugDto {
   }>;
 }
 
+export interface AuthResponseDto {
+  user: UserDto;
+  token: string;
+}
+
 const inferApiBaseUrl = () => {
   if (typeof window === "undefined") return "http://127.0.0.1:8787";
 
@@ -95,18 +100,43 @@ const inferApiBaseUrl = () => {
 };
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || inferApiBaseUrl();
+const SESSION_TOKEN_KEY = "stormdemo_session_token";
+
+const getStoredSessionToken = () => {
+  if (typeof window === "undefined") return null;
+
+  return window.localStorage.getItem(SESSION_TOKEN_KEY);
+};
+
+export const storeSessionToken = (token: string) => {
+  if (typeof window === "undefined") return;
+
+  window.localStorage.setItem(SESSION_TOKEN_KEY, token);
+};
+
+export const clearSessionToken = () => {
+  if (typeof window === "undefined") return;
+
+  window.localStorage.removeItem(SESSION_TOKEN_KEY);
+};
 
 const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
+  const token = getStoredSessionToken();
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(init?.headers ?? {}),
     },
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      clearSessionToken();
+    }
+
     const body = await response
       .json()
       .catch(() => ({ message: "Request failed" }));
@@ -125,12 +155,12 @@ export const api = {
     contactName: string;
     phone?: string;
   }) =>
-    request<{ user: UserDto }>("/auth/signup", {
+    request<AuthResponseDto>("/auth/signup", {
       method: "POST",
       body: JSON.stringify(payload),
     }),
   login: (payload: { email: string; password: string }) =>
-    request<{ user: UserDto }>("/auth/login", {
+    request<AuthResponseDto>("/auth/login", {
       method: "POST",
       body: JSON.stringify(payload),
     }),
