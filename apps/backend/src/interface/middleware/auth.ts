@@ -4,18 +4,40 @@ import type { MiddlewareHandler } from "hono";
 import { getCurrentUser } from "@/application/queries";
 import { runEffect } from "@/app";
 
+const getBearerToken = (authorizationHeader: string | undefined) => {
+  if (!authorizationHeader) return null;
+
+  const [scheme, token] = authorizationHeader.split(" ");
+
+  if (scheme?.toLowerCase() !== "bearer" || !token) {
+    return null;
+  }
+
+  return token;
+};
+
+export const getSessionToken = (c: Parameters<MiddlewareHandler>[0]) => {
+  const bearerToken = getBearerToken(c.req.header("Authorization"));
+
+  if (bearerToken) {
+    return bearerToken;
+  }
+
+  return getCookie(c, "stormdemo_session") ?? null;
+};
+
 export const requireAuth: MiddlewareHandler = async (c, next) => {
-  const token = getCookie(c, "stormdemo_session");
+  const token = getSessionToken(c);
 
   if (!token) {
-    console.warn("[auth] Missing session cookie", {
+    console.warn("[auth] Missing session token", {
       path: c.req.path,
       method: c.req.method,
       origin: c.req.header("Origin") ?? null,
       host: c.req.header("Host") ?? null,
     });
 
-    return c.json({ message: "Unauthorized: missing session cookie" }, 401);
+    return c.json({ message: "Unauthorized: missing session token" }, 401);
   }
 
   try {

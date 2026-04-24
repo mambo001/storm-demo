@@ -5,7 +5,7 @@ import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { login, LoginInput, logout, signUp, SignUpInput } from "@/application/commands";
 import { getCurrentUser } from "@/application/queries";
 import { runEffect, type AppEnv } from "@/app";
-import { requireAuth } from "@/interface/middleware/auth";
+import { getSessionToken, requireAuth } from "@/interface/middleware/auth";
 
 const decodeSignUpInput = Schema.decodeUnknown(SignUpInput);
 const decodeLoginInput = Schema.decodeUnknown(LoginInput);
@@ -33,7 +33,7 @@ authRoutes.post("/signup", async (c) => {
   const result = await runEffect(c, program);
   setSessionCookie(c, result.token);
 
-  return c.json({ user: result.user }, 201);
+  return c.json({ user: result.user, token: result.token }, 201);
 });
 
 authRoutes.post("/login", async (c) => {
@@ -46,11 +46,16 @@ authRoutes.post("/login", async (c) => {
   const result = await runEffect(c, program);
   setSessionCookie(c, result.token);
 
-  return c.json({ user: result.user });
+  return c.json({ user: result.user, token: result.token });
 });
 
 authRoutes.post("/logout", requireAuth, async (c) => {
-  const token = c.get("sessionToken");
+  const token = getSessionToken(c);
+
+  if (!token) {
+    return c.json({ message: "Unauthorized: missing session token" }, 401);
+  }
+
   await runEffect(c, logout(token));
   deleteCookie(c, "stormdemo_session", { path: "/" });
 
@@ -65,11 +70,12 @@ authRoutes.get("/me", requireAuth, async (c) => {
 });
 
 authRoutes.get("/debug-session", async (c) => {
-  const token = getCookie(c, "stormdemo_session");
+  const token = getSessionToken(c) ?? getCookie(c, "stormdemo_session");
 
   if (!token) {
     return c.json({
       cookiePresent: false,
+      bearerPresent: false,
       sessionValid: false,
       user: null,
     });
@@ -79,13 +85,15 @@ authRoutes.get("/debug-session", async (c) => {
     const user = await runEffect(c, getCurrentUser(token));
 
     return c.json({
-      cookiePresent: true,
+      cookiePresent: Boolean(getCookie(c, "stormdemo_session")),
+      bearerPresent: Boolean(getSessionToken(c)),
       sessionValid: true,
       user,
     });
   } catch {
     return c.json({
-      cookiePresent: true,
+      cookiePresent: Boolean(getCookie(c, "stormdemo_session")),
+      bearerPresent: Boolean(getSessionToken(c)),
       sessionValid: false,
       user: null,
     });
