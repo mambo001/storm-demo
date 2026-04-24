@@ -141,7 +141,7 @@ This increases backend responsibility, but keeps decision logic centralized.
 ### 1. Onboarding Flow
 
 1. Client signs up or logs in.
-2. API creates a cookie-backed session.
+2. API creates a server-side session and returns it via cookie or bearer token transport.
 3. Client creates one or more coverage areas.
 4. Dashboard loads coverage and recent storms.
 
@@ -198,7 +198,7 @@ This split matters because ingestion updates the internal dataset, while the UI 
 Primary tables:
 
 - `users`: client and admin accounts
-- `sessions`: cookie-auth session records
+- `sessions`: server-side session records used by cookie and bearer auth
 - `coverage_areas`: per-user service zones and thresholds
 - `storm_events`: normalized weather events
 - `alerts`: sent or attempted notifications
@@ -234,7 +234,9 @@ Current posture:
 - Simplicity over geospatial precision: circles instead of polygons or zip-boundary processing.
 - Internal normalization over provider leakage: source complexity is absorbed at ingestion time.
 - Server-side matching over client-side computation: easier to keep rules consistent.
-- Cookie sessions over token-heavy auth: better fit for a first-party web app.
+- Server-side sessions over stateless token auth: simpler revocation and expiry handling.
+
+The web demo now stores the session token in `localStorage` and sends it as a bearer token when cookies are unavailable. Cookie auth is still supported for the normal first-party browser flow.
 - Operational admin tooling over a full back-office system: consistent with MVP scope.
 - Demo mailer over full delivery infrastructure: enough to show the alert lifecycle without overbuilding.
 
